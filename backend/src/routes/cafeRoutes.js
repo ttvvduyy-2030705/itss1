@@ -24,6 +24,22 @@ router.get('/cafes', async (req, res) => {
   res.json(cafes);
 });
 
+// Route to get cafe by ID
+router.get('/cafes/:id', async (req, res) => {
+  const { id } = req.params;
+  let { data: cafe, error } = await supabase
+    .from('cafes')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json(cafe);
+})
+
 // Route to insert a single row into cafes
 router.post('/cafes', async (req, res) => {
     const { some_column, other_column } = req.body;
