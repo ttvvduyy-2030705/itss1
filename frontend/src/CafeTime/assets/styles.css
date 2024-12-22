@@ -326,3 +326,9 @@ svg {
     width: 100%;
     border-radius: 10px;
 }
+#map-container {
+    min-height: 400px !important;
+    width: 100% !important;
+    border-radius: 10px !important;
+    margin-top: 20px !important;
+}

@@ -1,10 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useRef } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+
 import './assets/styles.css';
 
+
+const MAPBOX_TOKEN = "pk.eyJ1IjoibWluaHNpZXU5MTAyMDAzIiwiYSI6ImNsdmNlZ2tzejBobm4ya3BmYWM4YXZwNDEifQ.R5AhdNQCqft1gzh1dAVBmA";
+const DEFAULT_COORDINATES = [139.6917, 35.6895];
 const CafeDetail = () => {
   const { id } = useParams();
   const [cafeDetails, setCafeDetails] = useState(null);
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+
+
 
   useEffect(() => {
     // Fetch the cafe details from the API
@@ -12,7 +23,13 @@ const CafeDetail = () => {
       try {
         const response = await fetch(`http://localhost:3000/api/cafes/${id}`);
         const data = await response.json();
-        setCafeDetails(data); 
+        setCafeDetails(data);
+        if (data.address) {
+          geocodeAddress(data.address);
+        } else {
+          console.warn("Cafe address is missing.");
+          initializeMap(DEFAULT_COORDINATES);  // Fallback if address is missing
+        }
       } catch (error) {
         console.error("Error fetching cafe details:", error);
       }
@@ -20,6 +37,59 @@ const CafeDetail = () => {
 
     fetchCafeDetails();
   }, [id]);
+
+  const geocodeAddress = async (address) => {
+    const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}`;
+
+    try {
+      const response = await fetch(geocodeUrl);
+      const data = await response.json();
+
+      if (data.features && data.features.length > 0) {
+        const coordinates = data.features[0].center;
+        initializeMap(coordinates);
+      } else {
+        console.warn("No results from geocoding. Falling back to Tokyo.");
+        initializeMap(DEFAULT_COORDINATES);  // Fallback to Tokyo if no results
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      initializeMap(DEFAULT_COORDINATES);
+    }
+  };
+
+
+  const initializeMap = (coordinates) => {
+    if (!mapContainerRef.current) return;
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+
+    // Prevent reinitialization if the map already exists
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo({
+        center: coordinates,
+        zoom: 14,
+      });
+      return;
+    }
+
+    // Initialize the map
+    mapInstanceRef.current = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: "mapbox://styles/mapbox/streets-v11",
+      center: coordinates,
+      zoom: 14,
+    });
+
+    // Place a marker at the cafe's location
+    new mapboxgl.Marker()
+      .setLngLat(coordinates)
+      .addTo(mapInstanceRef.current);
+
+    // Ensure the map resizes properly
+    mapInstanceRef.current.on('load', () => {
+      mapInstanceRef.current.resize();
+    });
+  };
 
   if (!cafeDetails) {
     return <div>Loading...</div>;
@@ -112,7 +182,14 @@ const CafeDetail = () => {
             <p>
               <img src="/assets/phone.svg" alt="Phone" /> 電話番号: {cafeDetails.phone || "N/A"}
             </p>
+
           </div>
+          {/* Map Section */}
+          <div
+            ref={mapContainerRef}
+            style={{ height: "400px", width: "100%", marginTop: "20px" }}
+            id="map-container"
+          />
         </div>
       </div>
 
