@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const { createClient } = require("@supabase/supabase-js");
 const cafeRoutes = require('./routes/cafeRoutes'); 
+const authRoutes = require('./routes/authRoutes');
 
 
 // Load biến môi trường từ file .env
@@ -20,9 +21,10 @@ const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 app.use('/api', cafeRoutes);
+app.use('/auth', authRoutes);
 
 // Lắng nghe server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

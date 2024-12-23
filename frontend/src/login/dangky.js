@@ -21,10 +21,37 @@ function Register() {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log(formData);
-        navigate('/login'); 
+        if (formData.password !== formData.confirmPassword) {
+            alert('Passwords do not match');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:3001/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password,
+                    phone: formData.phone
+                })
+            });
+
+            if (response.status === 201) {
+                alert('Registration successful');
+                navigate('/login');
+            } else {
+                const errorData = await response.json();
+                alert(`Error registering user: ${errorData.message}`);
+            }
+        } catch (error) {
+            console.error('Error registering user:', error);
+            alert('Error registering user');
+        }
     };
 
     return (

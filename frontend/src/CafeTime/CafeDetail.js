@@ -18,7 +18,7 @@ const CafeDetail = () => {
     // Fetch the cafe details from the API
     const fetchCafeDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/cafes/${id}`);
+        const response = await fetch(`http://localhost:3001/api/cafes/${id}`);
         const data = await response.json();
         setCafeDetails(data);
         if (data.address) {

@@ -18,10 +18,31 @@ function Login() {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log(formData);
-        navigate('/'); 
+        try {
+            const response = await fetch('http://localhost:3001/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password
+                })
+            });
+
+            if (response.status === 200) {
+                alert('Login successful');
+                navigate('/');
+            } else {
+                const errorData = await response.json();
+                alert(`Invalid email or password: ${errorData.message}`);
+            }
+        } catch (error) {
+            console.error('Error logging in:', error);
+            alert('Invalid email or password');
+        }
     };
 
     return (
