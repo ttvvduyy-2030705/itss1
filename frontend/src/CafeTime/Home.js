@@ -47,7 +47,7 @@ function Home() {
                 </svg>
               </span>
             </div>
-            <img src="/assets/avt1.png" alt="User Avatar" className="avatar" />
+            <img src="/assets/avt1.png" alt="User Avatar" className="avatar" onClick={() => navigate('/login')} />
           </div>
         </div>
         <div className="hero-content">

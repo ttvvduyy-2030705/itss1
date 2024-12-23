@@ -1,21 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-
 import './assets/styles.css';
-
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoibWluaHNpZXU5MTAyMDAzIiwiYSI6ImNsdmNlZ2tzejBobm4ya3BmYWM4YXZwNDEifQ.R5AhdNQCqft1gzh1dAVBmA";
 const DEFAULT_COORDINATES = [139.6917, 35.6895];
+
 const CafeDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [cafeDetails, setCafeDetails] = useState(null);
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
-
-
 
   useEffect(() => {
     // Fetch the cafe details from the API
@@ -58,7 +55,6 @@ const CafeDetail = () => {
     }
   };
 
-
   const initializeMap = (coordinates) => {
     if (!mapContainerRef.current) return;
     mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -100,7 +96,7 @@ const CafeDetail = () => {
       {/* Navbar */}
       <header className="hero-section">
         <div className="navbar">
-          <img src="/assets/logo.png" alt="Cafe Compass Logo" className="logo" />
+          <img src="/assets/logo.png" alt="Cafe Compass Logo" className="logo" onClick={() => navigate('/')} />
           <nav>
             <a href="#">私たちについて</a>
             <a href="#">カフェ</a>
