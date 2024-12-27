@@ -33,7 +33,9 @@ function Login() {
             });
 
             if (response.status === 200) {
+                const data = await response.json();
                 alert('Login successful');
+                localStorage.setItem('userId', data.userId); // Save user ID to localStorage
                 navigate('/');
             } else {
                 const errorData = await response.json();

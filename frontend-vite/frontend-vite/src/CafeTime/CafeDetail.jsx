@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -11,31 +11,42 @@ const CafeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [cafeDetails, setCafeDetails] = useState(null);
+  const [loading, setLoading] = useState(true); // Trạng thái tải
+  const [isBookmarked, setIsBookmarked] = useState(false); // Trạng thái bookmark
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
 
-  useEffect(() => {
-    // Fetch the cafe details from the API
-    const fetchCafeDetails = async () => {
-      try {
-        const response = await fetch(`http://localhost:3001/api/cafes/${id}`);
-        const data = await response.json();
-        setCafeDetails(data);
-        if (data.address) {
-          geocodeAddress(data.address);
-        } else {
-          console.warn("Cafe address is missing.");
-          initializeMap(DEFAULT_COORDINATES);  // Fallback if address is missing
-        }
-      } catch (error) {
-        console.error("Error fetching cafe details:", error);
-      }
-    };
+  // Fetch cafe details
+  const fetchCafeDetails = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`http://localhost:3001/api/cafes/${id}`);
+      const data = await response.json();
+      setCafeDetails(data);
 
-    fetchCafeDetails();
+      if (data.address) {
+        geocodeAddress(data.address);
+      } else {
+        console.warn("Cafe address is missing.");
+        initializeMap(DEFAULT_COORDINATES); // Fallback if address is missing
+      }
+
+      // Check if the cafe is bookmarked
+      const bookmarks = JSON.parse(localStorage.getItem("bookmarkedCafes")) || [];
+      setIsBookmarked(bookmarks.some((bookmark) => bookmark.id === data.id));
+    } catch (error) {
+      console.error("Error fetching cafe details:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
-  const geocodeAddress = async (address) => {
+  useEffect(() => {
+    fetchCafeDetails();
+  }, [fetchCafeDetails]);
+
+  // Geocode address
+  const geocodeAddress = useCallback(async (address) => {
     const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}`;
 
     try {
@@ -47,19 +58,19 @@ const CafeDetail = () => {
         initializeMap(coordinates);
       } else {
         console.warn("No results from geocoding. Falling back to Tokyo.");
-        initializeMap(DEFAULT_COORDINATES);  // Fallback to Tokyo if no results
+        initializeMap(DEFAULT_COORDINATES); // Fallback to Tokyo if no results
       }
     } catch (error) {
       console.error("Geocoding error:", error);
       initializeMap(DEFAULT_COORDINATES);
     }
-  };
+  }, []);
 
-  const initializeMap = (coordinates) => {
+  // Initialize map
+  const initializeMap = useCallback((coordinates) => {
     if (!mapContainerRef.current) return;
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    // Prevent reinitialization if the map already exists
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo({
         center: coordinates,
@@ -68,7 +79,6 @@ const CafeDetail = () => {
       return;
     }
 
-    // Initialize the map
     mapInstanceRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: "mapbox://styles/mapbox/streets-v11",
@@ -76,19 +86,40 @@ const CafeDetail = () => {
       zoom: 14,
     });
 
-    // Place a marker at the cafe's location
-    new mapboxgl.Marker()
-      .setLngLat(coordinates)
-      .addTo(mapInstanceRef.current);
+    new mapboxgl.Marker().setLngLat(coordinates).addTo(mapInstanceRef.current);
 
-    // Ensure the map resizes properly
-    mapInstanceRef.current.on('load', () => {
+    mapInstanceRef.current.on("load", () => {
       mapInstanceRef.current.resize();
     });
+  }, []);
+
+  // Handle bookmark
+  const handleBookmark = () => {
+    const bookmarks = JSON.parse(localStorage.getItem("bookmarkedCafes")) || [];
+    if (isBookmarked) {
+      // Remove from bookmarks
+      const updatedBookmarks = bookmarks.filter((bookmark) => bookmark.id !== cafeDetails.id);
+      localStorage.setItem("bookmarkedCafes", JSON.stringify(updatedBookmarks));
+    } else {
+      // Add to bookmarks
+      const newBookmark = {
+        id: cafeDetails.id,
+        name: cafeDetails.name,
+        address: cafeDetails.address,
+        image: cafeDetails.image || "/assets/card-dummy.png",
+      };
+      bookmarks.push(newBookmark);
+      localStorage.setItem("bookmarkedCafes", JSON.stringify(bookmarks));
+    }
+    setIsBookmarked(!isBookmarked);
   };
 
-  if (!cafeDetails) {
+  if (loading) {
     return <div>Loading...</div>;
+  }
+
+  if (!cafeDetails) {
+    return <div>No cafe details available.</div>;
   }
 
   return (
@@ -96,7 +127,12 @@ const CafeDetail = () => {
       {/* Navbar */}
       <header className="hero-section">
         <div className="navbar">
-          <img src="/assets/logo.png" alt="Cafe Compass Logo" className="logo" onClick={() => navigate('/')} />
+          <img
+            src="/assets/logo.png"
+            alt="Cafe Compass Logo"
+            className="logo"
+            onClick={() => navigate("/")}
+          />
           <nav>
             <a href="#">私たちについて</a>
             <a href="#">カフェ</a>
@@ -131,29 +167,18 @@ const CafeDetail = () => {
       <div className="detail-container">
         {/* Left Side */}
         <div className="detail-left">
-          <img src="/assets/card-dummy.png" alt="Cafe Photo" className="cafe-photo" />
+          <img
+            src={cafeDetails.image || "/assets/card-dummy.png"}
+            alt="Cafe Photo"
+            className="cafe-photo"
+          />
           <div className="review-stats">
             <h3>レビュー</h3>
-            <div className="review-bar">
-              <span>⭐ 5</span>
-              <div className="bar" style={{ width: "80%" }}></div>
-            </div>
-            <div className="review-bar">
-              <span>⭐ 4</span>
-              <div className="bar" style={{ width: "60%" }}></div>
-            </div>
-            <div className="review-bar">
-              <span>⭐ 3</span>
-              <div className="bar" style={{ width: "30%" }}></div>
-            </div>
-            <div className="review-bar">
-              <span>⭐ 2</span>
-              <div className="bar" style={{ width: "10%" }}></div>
-            </div>
-            <div className="review-bar">
-              <span>⭐ 1</span>
-              <div className="bar" style={{ width: "5%" }}></div>
-            </div>
+            <div className="review-bar"><span>⭐ 5</span><div className="bar" style={{ width: "80%" }}></div></div>
+            <div className="review-bar"><span>⭐ 4</span><div className="bar" style={{ width: "60%" }}></div></div>
+            <div className="review-bar"><span>⭐ 3</span><div className="bar" style={{ width: "30%" }}></div></div>
+            <div className="review-bar"><span>⭐ 2</span><div className="bar" style={{ width: "10%" }}></div></div>
+            <div className="review-bar"><span>⭐ 1</span><div className="bar" style={{ width: "5%" }}></div></div>
           </div>
         </div>
 
@@ -164,7 +189,9 @@ const CafeDetail = () => {
             ここは素晴らしいカフェで、美味しいコーヒーと素敵な雰囲気を楽しむことができます。
           </p>
           <div className="actions">
-            <button className="btn">📌 ブックマーク</button>
+            <button className="btn" onClick={handleBookmark}>
+              {isBookmarked ? "📍 アンブックマーク" : "📌 ブックマーク"}
+            </button>
             <button className="btn">⚠️ レポート</button>
             <button className="btn">🔗 シェア</button>
           </div>
@@ -178,9 +205,7 @@ const CafeDetail = () => {
             <p>
               <img src="/assets/phone.svg" alt="Phone" /> 電話番号: {cafeDetails.phone || "N/A"}
             </p>
-
           </div>
-          {/* Map Section */}
           <div
             ref={mapContainerRef}
             style={{ height: "400px", width: "100%", marginTop: "20px" }}
@@ -188,25 +213,6 @@ const CafeDetail = () => {
           />
         </div>
       </div>
-
-      {/* Below Section */}
-      <div className="other-media">
-        <h3>その他の写真・動画</h3>
-        <div className="media-grid">
-          <img src="/assets/card-dummy.png" alt="Photo 1" />
-          <img src="/assets/card-dummy.png" alt="Photo 2" />
-          <img src="/assets/card-dummy.png" alt="Photo 3" />
-          <img src="/assets/card-dummy.png" alt="Photo 4" />
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="footer">
-        <div className="footer-content">
-          <h2>の貢献に感謝する。</h2>
-          <p>ミン、ズオン、クエット</p>
-        </div>
-      </footer>
     </div>
   );
 };

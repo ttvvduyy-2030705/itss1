@@ -19,7 +19,7 @@ const authenticateUser = async (email, password) => {
     // Fetch user by email
     let { data: user, error } = await supabase
       .from('users')
-      .select('password')
+      .select('id, password')
       .eq('email', email)
       .single();
 
@@ -29,10 +29,10 @@ const authenticateUser = async (email, password) => {
 
     // Compare provided password with hashed password
     const isMatch = await bcrypt.compare(password, user.password);
-    return isMatch;
+    return isMatch ? user.id : null;
   } catch (error) {
     console.error('Error authenticating user:', error);
-    return false;
+    return null;
   }
 };
 
@@ -40,10 +40,10 @@ const authenticateUser = async (email, password) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  const isAuthenticated = await authenticateUser(email, password);
+  const userId = await authenticateUser(email, password);
 
-  if (isAuthenticated) {
-    res.status(200).json({ message: 'Login successful' });
+  if (userId) {
+    res.status(200).json({ message: 'Login successful', userId });
   } else {
     res.status(401).json({ message: 'Invalid email or password' });
   }
@@ -51,29 +51,29 @@ router.post('/login', async (req, res) => {
 
 // Route to handle user registration
 router.post('/register', async (req, res) => {
-    const { email, password, phone } = req.body;
-  
-    try {
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Insert the new user into the database
-      const { data, error } = await supabase
-        .from('users')
-        .insert([
-          { email, password: hashedPassword, phone }
-        ])
-        .select();
-  
-      if (error) {
-        throw error;
-      }
-  
-      res.status(201).json({ message: 'User registered successfully', user: data });
-    } catch (error) {
-      console.error('Error registering user:', error);
-      res.status(500).json({ message: 'Error registering user', error: error.message });
+  const { email, password, phone } = req.body;
+
+  try {
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Insert the new user into the database
+    const { data, error } = await supabase
+      .from('users')
+      .insert([
+        { email, password: hashedPassword, phone }
+      ])
+      .select();
+
+    if (error) {
+      throw error;
     }
-  });
+
+    res.status(201).json({ message: 'User registered successfully', user: data });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({ message: 'Error registering user', error: error.message });
+  }
+});
 
 module.exports = router;
