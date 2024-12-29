@@ -107,6 +107,7 @@ const CafeDetail = () => {
         name: cafeDetails.name,
         address: cafeDetails.address,
         image: cafeDetails.image || "/assets/card-dummy.png",
+        categories: cafeDetails.categories, // Lưu các thể loại vào bookmark
       };
       bookmarks.push(newBookmark);
       localStorage.setItem("bookmarkedCafes", JSON.stringify(bookmarks));
@@ -188,6 +189,21 @@ const CafeDetail = () => {
           <p className="description">
             ここは素晴らしいカフェで、美味しいコーヒーと素敵な雰囲気を楽しむことができます。
           </p>
+
+          {/* Hiển thị categories */}
+          <div className="categories">
+            <h3>Categories:</h3>
+            <ul>
+              {cafeDetails.categories && cafeDetails.categories.length > 0 ? (
+                cafeDetails.categories.map((category, index) => (
+                  <li key={index}>{category}</li>
+                ))
+              ) : (
+                <li>No categories available</li>
+              )}
+            </ul>
+          </div>
+
           <div className="actions">
             <button className="btn" onClick={handleBookmark}>
               {isBookmarked ? "📍 アンブックマーク" : "📌 ブックマーク"}
@@ -195,22 +211,8 @@ const CafeDetail = () => {
             <button className="btn">⚠️ レポート</button>
             <button className="btn">🔗 シェア</button>
           </div>
-          <div className="info">
-            <p>
-              <img src="/assets/location.svg" alt="Location" /> {cafeDetails.address}
-            </p>
-            <p>
-              <img src="/assets/clock.svg" alt="Clock" /> 営業時間: {cafeDetails.opening_hours}
-            </p>
-            <p>
-              <img src="/assets/phone.svg" alt="Phone" /> 電話番号: {cafeDetails.phone || "N/A"}
-            </p>
-          </div>
-          <div
-            ref={mapContainerRef}
-            style={{ height: "400px", width: "100%", marginTop: "20px" }}
-            id="map-container"
-          />
+
+          <div ref={mapContainerRef} style={{ height: "400px", marginTop: "30px" }}></div>
         </div>
       </div>
     </div>
