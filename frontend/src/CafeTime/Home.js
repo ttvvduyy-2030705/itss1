@@ -19,7 +19,7 @@ function Home() {
                 }
                 const data = await response.json();
                 setCafes(data);
-                setSearchResults(data);
+                setSearchResults(data);  // Lưu dữ liệu quán cafe vào searchResults
             } catch (error) {
                 console.error('Failed to fetch cafes:', error);
             } finally {
@@ -30,41 +30,40 @@ function Home() {
         fetchCafes();
     }, []);
 
+    // Hàm tìm kiếm
     const handleSearch = () => {
         if (searchQuery.trim() !== '') {
-            const filteredCafes = cafes.filter(cafe => 
-                cafe.categories.some(category => 
+            const filteredCafes = cafes.filter(cafe =>
+                cafe.categories.some(category =>
                     category.toLowerCase().includes(searchQuery.toLowerCase())
-                )
+                ) || cafe.name.toLowerCase().includes(searchQuery.toLowerCase()) || cafe.address.toLowerCase().includes(searchQuery.toLowerCase())
             );
             setSearchResults(filteredCafes);
         } else {
-            setSearchResults(cafes);
+            setSearchResults(cafes); // Nếu không có từ khóa tìm kiếm, hiển thị tất cả
         }
     };
 
+    // Hàm để xử lý sự kiện khi nhấn phím Enter trong ô tìm kiếm
     const handleKeyDown = (event) => {
         if (event.key === 'Enter') {
             handleSearch();
         }
     };
 
+    // Hàm để điều hướng đến trang chi tiết quán cafe
     const handleCardClick = (cafeId) => {
         navigate(`/cafe-detail/${cafeId}`);
     };
 
-    const handleBookmarkPage = () => {
-        navigate('/bookmark'); // Điều hướng đến trang bookmark
-    };
-
+    // Hàm xử lý việc lưu lại quán cafe vào danh sách yêu thích
     const handleBookmark = (cafe) => {
         let savedBookmarks = JSON.parse(localStorage.getItem('bookmarkedCafes')) || [];
-        // Kiểm tra xem quán đã có trong danh sách bookmark chưa
         if (!savedBookmarks.some(bookmarkedCafe => bookmarkedCafe.id === cafe.id)) {
             savedBookmarks.push(cafe);
             localStorage.setItem('bookmarkedCafes', JSON.stringify(savedBookmarks));
         }
-    };    
+    };
 
     if (loading) {
         return <div>Loading...</div>;
@@ -119,15 +118,9 @@ function Home() {
                         <h1>コーヒーを楽しむ場所を知っている</h1>
                         <p>自分にぴったりのカフェが見つからない？ カフェコンパスがお手伝い。</p>
                         <div className="hero-buttons">
-                            <button className="btn primary" onClick={() => navigate('/search')}>
-                                今すぐ探す
-                            </button>
-                            <button className="btn secondary" onClick={() => navigate('/details')}>
-                                さらに詳しく
-                            </button>
-                            <button className="btn bookmark" onClick={handleBookmarkPage}>
-                                ブックマーク
-                            </button>
+                            <button className="btn primary" onClick={() => navigate('/search')}>今すぐ探す</button>
+                            <button className="btn secondary" onClick={() => navigate('/details')}>さらに詳しく</button>
+                            <button className="btn bookmark" onClick={() => navigate('/bookmark')}>ブックマーク</button>
                         </div>
                     </div>
                     <img src="/assets/img-hero.png" alt="Hero Image" className="hero-image" />
@@ -144,22 +137,14 @@ function Home() {
                                 <img src={cafe.image || '/assets/card-dummy.png'} alt="Card Image" />
                                 <div className="card-content">
                                     <div className="card-header">
-                                        <span className="rating">
-                                            {cafe.rating}{' '}
-                                            <img
-                                                src="/assets/star.svg"
-                                                alt="Star"
-                                                className="star-icon"
-                                            />
-                                        </span>
+                                        <span className="rating">{cafe.rating} <img src="/assets/star.svg" alt="Star" className="star-icon" /></span>
                                         <span className="distance">{cafe.distance}km</span>
                                     </div>
                                     <h3>{cafe.name}</h3>
+                                    <p>{cafe.address}</p> {/* Hiển thị địa chỉ quán cafe */}
                                     <div className="tags">
                                         {cafe.categories?.map((category) => (
-                                            <span className="tag" key={category}>
-                                                {category}
-                                            </span>
+                                            <span className="tag" key={category}>{category}</span>
                                         ))}
                                     </div>
                                 </div>
