@@ -12,9 +12,8 @@ function BookmarkList() {
             (cafe, index, self) => index === self.findIndex((c) => c.id === cafe.id)
         );
         setBookmarkedCafes(uniqueBookmarks);
-        localStorage.setItem('bookmarkedCafes', JSON.stringify(uniqueBookmarks)); // Cập nhật lại localStorage
         setLoading(false);
-    }, []);
+    }, []);    
 
     // Xóa một quán khỏi danh sách bookmark
     const handleRemoveBookmark = (cafeId) => {
@@ -49,6 +48,17 @@ function BookmarkList() {
                                     <p>Địa chỉ: {cafe.address || 'Không có thông tin'}</p>
                                     <p>Khoảng cách: {cafe.distance} km</p>
                                     <p>Rating: {cafe.rating} ⭐</p>
+                                    <div className="categories">
+    <p>Thể loại:</p>
+    <div className="tags">
+        {cafe.categories?.map((category, index) => (
+            <span className="tag" key={index}>
+                {category}
+            </span>
+        ))}
+    </div>
+</div>
+
                                     <button
                                         className="remove-bookmark-btn"
                                         onClick={() => handleRemoveBookmark(cafe.id)}
