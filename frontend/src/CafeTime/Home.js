@@ -286,23 +286,31 @@ function Home() {
                     </div>
                 )}
                 <div className="recommend-section">
-                    <h2>あなたのブックマークに似たカフェ</h2>
-                    <div className="cards">
-                        {recommendedCafes.length > 0 ? (
-                            recommendedCafes.map(cafe => (
-                                <div className="card" key={cafe.id} onClick={() => handleCardClick(cafe.id)}>
-                                    <img src={cafe.image || '/assets/card-dummy.png'} alt={cafe.name} />
-                                    <div className="card-content">
-                                        <h3>{cafe.name}</h3>
-                                        <p>{cafe.address}</p>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <p>おすすめのカフェがありません。</p>
-                        )}
+    <h2>あなたのブックマークに似たカフェ</h2>
+    <div className="cards">
+        {recommendedCafes.length > 0 ? (
+            recommendedCafes.map(cafe => (
+                <div className="card" key={cafe.id} onClick={() => handleCardClick(cafe.id)}>
+                    <img src={cafe.image || '/assets/card-dummy.png'} alt={cafe.name} />
+                    <div className="card-content">
+                        <h3>{cafe.name}</h3>
+                        <p>{cafe.address}</p>
+                        <div className="tags">
+                            {cafe.categories?.map((category) => (
+                                <span className="tag" key={category}>
+                                    {category}
+                                </span>
+                            ))}
+                        </div>
                     </div>
                 </div>
+            ))
+        ) : (
+            <p>おすすめのカフェがありません。</p>
+        )}
+    </div>
+</div>
+
                 <div className="cards-bg"></div>
 
                 <h2>最近ご覧になった</h2>
