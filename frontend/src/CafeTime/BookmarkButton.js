@@ -25,7 +25,7 @@ const BookmarkButton = ({ cafeDetails, updateCafesList }) => {
       // Nếu chưa bookmark, thực hiện bookmark
       updatedCafes = [...cafes, cafeDetails];
       setIsBookmarked(true);
-      // Cập nhật lại danh sách các quán cà phê trong localStorage
+      // Cập nhật lại danh sách các quán cà phê trong localStorage, đảm bảo lưu đầy đủ thông tin, bao gồm categories
       localStorage.setItem("bookmarkedCafes", JSON.stringify(updatedCafes));
       // Gọi hàm để cập nhật lại danh sách quán cà phê trên UI
       updateCafesList(updatedCafes);
