@@ -138,11 +138,11 @@ function Home() {
             const filteredCafes = cafes.filter(cafe =>
                 cafe.categories.some(category =>
                     category.toLowerCase().includes(searchQuery.toLowerCase())
-                ) || cafe.name.toLowerCase().includes(searchQuery.toLowerCase()) || cafe.address.toLowerCase().includes(searchQuery.toLowerCase())
+                )
             );
             setSearchResults(filteredCafes);
         } else {
-            setSearchResults(cafes); 
+            setSearchResults(cafes);
         }
     };
 
