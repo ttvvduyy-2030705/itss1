@@ -2,17 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './assets/styles.css';
 
-
-const FIXED_COORDINATES = [105.845438, 21.005187]; // [longitude, latitude]
-const MAPBOX_TOKEN = "pk.eyJ1IjoibWluaHNpZXU5MTAyMDAzIiwiYSI6ImNsdmNlZ2tzejBobm4ya3BmYWM4YXZwNDEifQ.R5AhdNQCqft1gzh1dAVBmA";
-
-
 function Home() {
     const [cafes, setCafes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
-    const [sortOrder, setSortOrder] = useState('asc');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -24,16 +18,8 @@ function Home() {
                     throw new Error('Network response was not ok');
                 }
                 const data = await response.json();
-
-                const cafesWithDistance = await Promise.all(
-                    data.map(async (cafe) => {
-                        const coordinates = await geocodeAddress(cafe.address);
-                        const distance = calculateDistance(FIXED_COORDINATES, coordinates);
-                        return { ...cafe, distance: distance.toFixed(2) };
-                    })
-                );
-                setCafes(cafesWithDistance);
-                setSearchResults(cafesWithDistance);
+                setCafes(data);
+                setSearchResults(data);
             } catch (error) {
                 console.error('Failed to fetch cafes:', error);
             } finally {
@@ -44,39 +30,10 @@ function Home() {
         fetchCafes();
     }, []);
 
-    const geocodeAddress = async (address) => {
-        const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}`;
-        try {
-            const response = await fetch(geocodeUrl);
-            const data = await response.json();
-            if (data.features && data.features.length > 0) {
-                return data.features[0].center; // [lng, lat]
-            }
-            console.warn(`No results for address: ${address}`);
-            return FIXED_COORDINATES; // Default to fixed location
-        } catch (error) {
-            console.error("Geocoding error:", error);
-            return FIXED_COORDINATES; // Fallback on error
-        }
-    };
-
-    // Haversine formula to calculate distance
-    const calculateDistance = ([lon1, lat1], [lon2, lat2]) => {
-        const toRad = (deg) => deg * (Math.PI / 180);
-        const R = 6371; // Radius of Earth in km
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    };
     const handleSearch = () => {
         if (searchQuery.trim() !== '') {
-            const filteredCafes = cafes.filter(cafe =>
-                cafe.categories.some(category =>
+            const filteredCafes = cafes.filter(cafe => 
+                cafe.categories.some(category => 
                     category.toLowerCase().includes(searchQuery.toLowerCase())
                 )
             );
@@ -84,14 +41,6 @@ function Home() {
         } else {
             setSearchResults(cafes);
         }
-    };
-
-    const handleSortChange = (order) => {
-        setSortOrder(order);
-        const sortedCafes = [...searchResults].sort((a, b) => {
-            return order === 'asc' ? a.distance - b.distance : b.distance - a.distance;
-        });
-        setSearchResults(sortedCafes);
     };
 
     const handleKeyDown = (event) => {
@@ -107,6 +56,15 @@ function Home() {
     const handleBookmarkPage = () => {
         navigate('/bookmark'); // Điều hướng đến trang bookmark
     };
+
+    const handleBookmark = (cafe) => {
+        let savedBookmarks = JSON.parse(localStorage.getItem('bookmarkedCafes')) || [];
+        // Kiểm tra xem quán đã có trong danh sách bookmark chưa
+        if (!savedBookmarks.some(bookmarkedCafe => bookmarkedCafe.id === cafe.id)) {
+            savedBookmarks.push(cafe);
+            localStorage.setItem('bookmarkedCafes', JSON.stringify(savedBookmarks));
+        }
+    };    
 
     if (loading) {
         return <div>Loading...</div>;
@@ -177,17 +135,7 @@ function Home() {
             </header>
 
             <section className="cards-section">
-                <div className="filters">
-
-
-                    {/* 🔹 Sort Dropdown */}
-                    <select value={sortOrder} onChange={(e) => handleSortChange(e.target.value)} className="dropdown">
-                        <option value="asc">距離 (昇順)</option>
-                        <option value="desc">距離 (降順)</option>
-                    </select>
-                </div>
                 <div className="cards-bg"></div>
-
                 <h2>最近ご覧になった</h2>
                 <div className="cards" id="cards-container">
                     {searchResults.length > 0 ? (
