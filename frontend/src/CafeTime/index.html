@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cafe Compass</title>
+    <link rel="stylesheet" href="assets/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <header>
+        <div class="navbar">
+            <a href="/">
+                <img src="assets/logo.png" alt="Cafe Compass Logo" class="logo">
+            </a>
+            <nav>
+                <a href="#">私たちについて</a>
+                <a href="#">カフェ</a>
+                <a href="#">言語: 日本語</a>
+            </nav>
+            <div class="nav-right">
+                <div class="search-bar">
+                    <form action="/search-results" method="GET">
+                        <input type="text" name="query" placeholder="カフェを探す (カテゴリー)">
+                        <button type="submit" class="search-icon">
+                            <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 20L15.514 15.506L20 20ZM18 9.5C18 11.7543 17.1045 13.9163 15.5104 15.5104C13.9163 17.1045 11.7543 18 9.5 18C7.24566 18 5.08365 17.1045 3.48959 15.5104C1.89553 13.9163 1 11.7543 1 9.5C1 7.24566 1.89553 5.08365 3.48959 3.48959C5.08365 1.89553 7.24566 1 9.5 1C11.7543 1 13.9163 1.89553 15.5104 3.48959C17.1045 5.08365 18 7.24566 18 9.5V9.5Z" stroke="#1D1D1D" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+                <img src="assets/avt1.png" alt="User Avatar" class="avatar">
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>コーヒーを楽しむ場所を知っている</h1>
+                <p>自分にぴったりのカフェが見つからない？ カフェコンパスがお手伝い。</p>
+                <div class="hero-buttons">
+                    <a href="/search-results" class="btn primary">今すぐ探す</a>
+                    <a href="#" class="btn secondary">さらに詳しく</a>
+                </div>
+            </div>
+            <img src="assets/img-hero.png" alt="Hero Image" class="hero-image">
+        </div>
+    </section>
+</body>
+</html>
