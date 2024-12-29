@@ -204,6 +204,13 @@ const CafeDetail = () => {
             </ul>
           </div>
 
+          {/* Display Cafe Address */}
+          {cafeDetails.address && (
+            <p className="address">
+              <strong>Address:</strong> {cafeDetails.address}
+            </p>
+          )}
+
           <div className="actions">
             <button className="btn" onClick={handleBookmark}>
               {isBookmarked ? "📍 アンブックマーク" : "📌 ブックマーク"}
