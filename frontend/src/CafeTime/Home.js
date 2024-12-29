@@ -2,11 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './assets/styles.css';
 
+
+// const FIXED_COORDINATES = [105.845438, 21.005187]; 
+// [longitude, latitude]
+const MAPBOX_TOKEN = "pk.eyJ1IjoibWluaHNpZXU5MTAyMDAzIiwiYSI6ImNsdmNlZ2tzejBobm4ya3BmYWM4YXZwNDEifQ.R5AhdNQCqft1gzh1dAVBmA";
+
+
 function Home() {
     const [cafes, setCafes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
+    const [sortOrder, setSortOrder] = useState('asc');
+    const [showFilterModal, setShowFilterModal] = useState(false);
+    const [selectedTags, setSelectedTags] = useState([]);
+    const [availableTags, setAvailableTags] = useState([]);
+    const [recommendedCafes, setRecommendedCafes] = useState([]);
+    const [coordinates1, setCoordinates] = useState([105.845438, 21.005187]);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -18,8 +30,22 @@ function Home() {
                     throw new Error('Network response was not ok');
                 }
                 const data = await response.json();
-                setCafes(data);
-                setSearchResults(data);  // Lưu dữ liệu quán cafe vào searchResults
+
+                const cafesWithDistance = await Promise.all(
+                    data.map(async (cafe) => {
+                        const coordinates = await geocodeAddress(cafe.address);
+                        const distance = calculateDistance(coordinates1, coordinates);
+                        return { ...cafe, distance: distance.toFixed(2) };
+                    })
+                );
+
+                setCafes(cafesWithDistance);
+                setSearchResults(cafesWithDistance);
+
+                generateRecommendations(cafesWithDistance);
+
+                const tags = new Set(cafesWithDistance.flatMap(cafe => cafe.categories));
+                setAvailableTags([...tags]);
             } catch (error) {
                 console.error('Failed to fetch cafes:', error);
             } finally {
@@ -28,9 +54,85 @@ function Home() {
         }
 
         fetchCafes();
-    }, []);
+    }, [coordinates1]);
+    useEffect(() => {
+        console.log('Bookmarked cafes updated');
+        generateRecommendations(cafes);
+    }, [cafes]);
 
-    // Hàm tìm kiếm
+    const geocodeAddress = async (address) => {
+        const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}`;
+        try {
+            const response = await fetch(geocodeUrl);
+            const data = await response.json();
+            if (data.features && data.features.length > 0) {
+                return data.features[0].center; // [lng, lat]
+            }
+            console.warn(`No results for address: ${address}`);
+            return coordinates1; // Default to fixed location
+        } catch (error) {
+            console.error("Geocoding error:", error);
+            return coordinates1; // Fallback on error
+        }
+    };
+
+    // Haversine formula to calculate distance
+    const calculateDistance = ([lon1, lat1], [lon2, lat2]) => {
+        const toRad = (deg) => deg * (Math.PI / 180);
+        const R = 6371; // Radius of Earth in km
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    };
+
+    const generateRecommendations = (allCafes) => {
+        const savedBookmarks = JSON.parse(localStorage.getItem('bookmarkedCafes')) || [];
+        console.log('Saved bookmarks:', savedBookmarks);
+        if (savedBookmarks.length === 0) {
+            setRecommendedCafes([]);
+            return;
+        }
+        const bookmarkedTags = savedBookmarks.flatMap(cafe => cafe.categories || []);
+        console.log('Bookmarked tags:', bookmarkedTags);
+
+        const recommended = allCafes.filter(cafe =>
+            cafe.categories &&
+            cafe.categories.some(category => bookmarkedTags.includes(category)) &&
+            !savedBookmarks.some(bookmarkedCafe => bookmarkedCafe.id === cafe.id)
+        );
+
+        console.log('Recommended cafes:', recommended);
+        setRecommendedCafes(recommended);
+    };
+    const handleCoordinateChange = (e) => {
+        const { name, value } = e.target;
+        const updatedCoordinates = [...coordinates1];
+        updatedCoordinates[name === 'longitude' ? 0 : 1] = parseFloat(value);
+        setCoordinates(updatedCoordinates);
+    };
+    const handleFilterChange = (tag) => {
+        const updatedTags = selectedTags.includes(tag)
+            ? selectedTags.filter(t => t !== tag)
+            : [...selectedTags, tag];
+        setSelectedTags(updatedTags);
+    };
+
+    const applyFilters = () => {
+        const filteredCafes = cafes.filter(cafe =>
+            selectedTags.every(tag => cafe.categories.includes(tag))
+        );
+        setSearchResults(filteredCafes);
+        setShowFilterModal(false);
+    };
+
+    const toggleModal = () => {
+        setShowFilterModal(!showFilterModal);
+    };
     const handleSearch = () => {
         if (searchQuery.trim() !== '') {
             const filteredCafes = cafes.filter(cafe =>
@@ -40,25 +142,34 @@ function Home() {
             );
             setSearchResults(filteredCafes);
         } else {
-            setSearchResults(cafes); // Nếu không có từ khóa tìm kiếm, hiển thị tất cả
+            setSearchResults(cafes); 
         }
     };
 
-    // Hàm để xử lý sự kiện khi nhấn phím Enter trong ô tìm kiếm
+    const handleSortChange = (order) => {
+        setSortOrder(order);
+        const sortedCafes = [...searchResults].sort((a, b) => {
+            return order === 'asc' ? a.distance - b.distance : b.distance - a.distance;
+        });
+        setSearchResults(sortedCafes);
+    };
+
     const handleKeyDown = (event) => {
         if (event.key === 'Enter') {
             handleSearch();
         }
     };
 
-    // Hàm để điều hướng đến trang chi tiết quán cafe
     const handleCardClick = (cafeId) => {
         navigate(`/cafe-detail/${cafeId}`);
     };
 
-    // Hàm xử lý việc lưu lại quán cafe vào danh sách yêu thích
+    const handleBookmarkPage = () => {
+        navigate('/bookmark'); // Điều hướng đến trang bookmark
+    };
     const handleBookmark = (cafe) => {
         let savedBookmarks = JSON.parse(localStorage.getItem('bookmarkedCafes')) || [];
+        // Kiểm tra xem quán đã có trong danh sách bookmark chưa
         if (!savedBookmarks.some(bookmarkedCafe => bookmarkedCafe.id === cafe.id)) {
             savedBookmarks.push(cafe);
             localStorage.setItem('bookmarkedCafes', JSON.stringify(savedBookmarks));
@@ -118,9 +229,15 @@ function Home() {
                         <h1>コーヒーを楽しむ場所を知っている</h1>
                         <p>自分にぴったりのカフェが見つからない？ カフェコンパスがお手伝い。</p>
                         <div className="hero-buttons">
-                            <button className="btn primary" onClick={() => navigate('/search')}>今すぐ探す</button>
-                            <button className="btn secondary" onClick={() => navigate('/details')}>さらに詳しく</button>
-                            <button className="btn bookmark" onClick={() => navigate('/bookmark')}>ブックマーク</button>
+                            <button className="btn primary" onClick={() => navigate('/search')}>
+                                今すぐ探す
+                            </button>
+                            <button className="btn secondary" onClick={() => navigate('/details')}>
+                                さらに詳しく
+                            </button>
+                            <button className="btn bookmark" onClick={handleBookmarkPage}>
+                                ブックマーク
+                            </button>
                         </div>
                     </div>
                     <img src="/assets/img-hero.png" alt="Hero Image" className="hero-image" />
@@ -128,7 +245,72 @@ function Home() {
             </header>
 
             <section className="cards-section">
+                <div>
+                    <label>経度: </label>
+                    <input
+                        type="number"
+                        name="longitude"
+                        value={coordinates1[0]}
+                        onChange={handleCoordinateChange}
+                    />
+                    <label>緯度: </label>
+                    <input
+                        type="number"
+                        name="latitude"
+                        value={coordinates1[1]}
+                        onChange={handleCoordinateChange}
+                    />
+                </div>
+                <div className="filters">
+                    <button className='filter-button' onClick={toggleModal}>フィルター</button>
+
+                    {/* 🔹 Sort Dropdown */}
+                    <select value={sortOrder} onChange={(e) => handleSortChange(e.target.value)} className="dropdown">
+                        <option value="asc">距離 (昇順)</option>
+                        <option value="desc">距離 (降順)</option>
+                    </select>
+                </div>
+                {showFilterModal && (
+                    <div className="filter-modal">
+                        <div className="modal-content">
+                            <h3>タグでフィルタリング</h3>
+                            {availableTags.map(tag => (
+                                <div className="checkbox-wrapper" key={tag}>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedTags.includes(tag)}
+                                        onChange={() => handleFilterChange(tag)}
+                                    />
+                                    <label>{tag}</label>
+                                </div>
+                            ))}
+                            <div className="modal-actions">
+                                <button className="apply-button" onClick={applyFilters}>適用</button>
+                                <button className="cancel-button" onClick={toggleModal}>キャンセル</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div className="recommend-section">
+                    <h2>あなたのブックマークに似たカフェ</h2>
+                    <div className="cards">
+                        {recommendedCafes.length > 0 ? (
+                            recommendedCafes.map(cafe => (
+                                <div className="card" key={cafe.id} onClick={() => handleCardClick(cafe.id)}>
+                                    <img src={cafe.image || '/assets/card-dummy.png'} alt={cafe.name} />
+                                    <div className="card-content">
+                                        <h3>{cafe.name}</h3>
+                                        <p>{cafe.address}</p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p>おすすめのカフェがありません。</p>
+                        )}
+                    </div>
+                </div>
                 <div className="cards-bg"></div>
+
                 <h2>最近ご覧になった</h2>
                 <div className="cards" id="cards-container">
                     {searchResults.length > 0 ? (
@@ -137,14 +319,22 @@ function Home() {
                                 <img src={cafe.image || '/assets/card-dummy.png'} alt="Card Image" />
                                 <div className="card-content">
                                     <div className="card-header">
-                                        <span className="rating">{cafe.rating} <img src="/assets/star.svg" alt="Star" className="star-icon" /></span>
+                                        <span className="rating">
+                                            {cafe.rating}{' '}
+                                            <img
+                                                src="/assets/star.svg"
+                                                alt="Star"
+                                                className="star-icon"
+                                            />
+                                        </span>
                                         <span className="distance">{cafe.distance}km</span>
                                     </div>
                                     <h3>{cafe.name}</h3>
-                                    <p>{cafe.address}</p> {/* Hiển thị địa chỉ quán cafe */}
                                     <div className="tags">
                                         {cafe.categories?.map((category) => (
-                                            <span className="tag" key={category}>{category}</span>
+                                            <span className="tag" key={category}>
+                                                {category}
+                                            </span>
                                         ))}
                                     </div>
                                 </div>
