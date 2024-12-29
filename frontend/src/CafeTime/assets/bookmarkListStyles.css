@@ -104,3 +104,61 @@ body {
     background-color: #f57f17;
     transform: scale(0.98);
 }
+/* bookmarkListStyles.css */
+
+/* Cải tiến CSS cho bookmark-grid */
+.bookmark-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Tạo grid với các card có kích thước đều */
+    gap: 20px;
+    padding: 20px;
+}
+
+/* Tạo style cho từng card */
+.bookmark-card {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Cải tiến style cho các tags (categories) */
+.categories {
+    margin-top: 10px;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Khoảng cách giữa các tag */
+    margin-top: 5px;
+}
+
+.tag {
+    background-color: #e0e0e0;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #555;
+    display: inline-block;
+}
+
+.bookmark-info {
+    padding: 10px;
+}
+
+.remove-bookmark-btn {
+    background-color: #ff3b30;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.remove-bookmark-btn:hover {
+    background-color: #e63946;
+}
