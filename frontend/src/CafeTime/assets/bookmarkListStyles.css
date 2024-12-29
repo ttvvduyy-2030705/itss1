@@ -69,3 +69,38 @@ body {
     font-size: 0.9em;
     color: #555;
 }
+
+.categories {
+    margin-top: 15px;
+    text-align: left;
+    font-weight: bold;
+    color: #ff9800;
+    font-size: 1.1em;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.tag {
+    background-color: #ffeb3b;
+    padding: 7px 15px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    color: #333;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.tag:hover {
+    background-color: #fbc02d;
+    cursor: pointer;
+}
+
+.tag:active {
+    background-color: #f57f17;
+    transform: scale(0.98);
+}
