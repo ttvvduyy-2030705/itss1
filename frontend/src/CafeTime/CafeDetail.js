@@ -11,8 +11,8 @@ const CafeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [cafeDetails, setCafeDetails] = useState(null);
-  const [loading, setLoading] = useState(true); // Trạng thái tải
-  const [isBookmarked, setIsBookmarked] = useState(false); // Trạng thái bookmark
+  const [loading, setLoading] = useState(true);
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
 
@@ -28,7 +28,7 @@ const CafeDetail = () => {
         geocodeAddress(data.address);
       } else {
         console.warn("Cafe address is missing.");
-        initializeMap(DEFAULT_COORDINATES); // Fallback if address is missing
+        initializeMap(DEFAULT_COORDINATES);
       }
 
       // Check if the cafe is bookmarked
@@ -58,7 +58,7 @@ const CafeDetail = () => {
         initializeMap(coordinates);
       } else {
         console.warn("No results from geocoding. Falling back to Tokyo.");
-        initializeMap(DEFAULT_COORDINATES); // Fallback to Tokyo if no results
+        initializeMap(DEFAULT_COORDINATES);
       }
     } catch (error) {
       console.error("Geocoding error:", error);
@@ -97,11 +97,9 @@ const CafeDetail = () => {
   const handleBookmark = () => {
     const bookmarks = JSON.parse(localStorage.getItem("bookmarkedCafes")) || [];
     if (isBookmarked) {
-      // Remove from bookmarks
       const updatedBookmarks = bookmarks.filter((bookmark) => bookmark.id !== cafeDetails.id);
       localStorage.setItem("bookmarkedCafes", JSON.stringify(updatedBookmarks));
     } else {
-      // Add to bookmarks
       const newBookmark = {
         id: cafeDetails.id,
         name: cafeDetails.name,
@@ -122,6 +120,9 @@ const CafeDetail = () => {
   if (!cafeDetails) {
     return <div>No cafe details available.</div>;
   }
+
+  // Default to 4 images if not enough images are provided
+  const cafeImages = cafeDetails.images?.length >= 4 ? cafeDetails.images.slice(0, 4) : new Array(4).fill(cafeDetails.image || "/assets/card-dummy.png");
 
   return (
     <div>
@@ -165,31 +166,45 @@ const CafeDetail = () => {
       </header>
 
       {/* Detail Content */}
-      <div className="detail-container">
-        {/* Left Side */}
-        <div className="detail-left">
+      <div className="detail-container" style={{ display: "flex", gap: "20px", padding: "20px" }}>
+        {/* Left Side - Cafe Photo */}
+        <div className="detail-left" style={{ flex: "1", marginBottom: "20px" }}>
           <img
             src={cafeDetails.image || "/assets/card-dummy.png"}
             alt="Cafe Photo"
             className="cafe-photo"
+            style={{
+              width: "100%", 
+              height: "400px", 
+              objectFit: "cover", 
+              marginBottom: "20px"
+            }}
           />
-          <div className="review-stats">
-            <h3>レビュー</h3>
-            <div className="review-bar"><span>⭐ 5</span><div className="bar" style={{ width: "80%" }}></div></div>
-            <div className="review-bar"><span>⭐ 4</span><div className="bar" style={{ width: "60%" }}></div></div>
-            <div className="review-bar"><span>⭐ 3</span><div className="bar" style={{ width: "30%" }}></div></div>
-            <div className="review-bar"><span>⭐ 2</span><div className="bar" style={{ width: "10%" }}></div></div>
-            <div className="review-bar"><span>⭐ 1</span><div className="bar" style={{ width: "5%" }}></div></div>
+
+          {/* 4 Images Gallery */}
+          <div className="image-gallery" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+            {cafeImages.map((image, index) => (
+              <img
+                key={index}
+                src={image}
+                alt={`Cafe Image ${index + 1}`}
+                style={{
+                  width: "100%", 
+                  height: "auto", 
+                  objectFit: "cover", 
+                  maxHeight: "150px",
+                }}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Right Side */}
-        <div className="detail-right">
+        {/* Right Side - Cafe Info */}
+        <div className="detail-right" style={{ flex: "1" }}>
           <h1>{cafeDetails.name}</h1>
-          <p className="description">
-            ここは素晴らしいカフェで、美味しいコーヒーと素敵な雰囲気を楽しむことができます。
-          </p>
-          <div className="categories">
+
+          {/* Cafe Details */}
+          <div className="categories" style={{ marginBottom: "20px" }}>
             <h3>Categories:</h3>
             <ul>
               {cafeDetails.categories && cafeDetails.categories.length > 0 ? (
@@ -201,11 +216,6 @@ const CafeDetail = () => {
               )}
             </ul>
           </div>
-{cafeDetails.address && (
-  <p className="address">
-    <strong>Address:</strong> {cafeDetails.address}
-  </p>
-)}
           <div className="actions">
             <button className="btn" onClick={handleBookmark}>
               {isBookmarked ? "📍 アンブックマーク" : "📌 ブックマーク"}
@@ -213,7 +223,8 @@ const CafeDetail = () => {
             <button className="btn">⚠️ レポート</button>
             <button className="btn">🔗 シェア</button>
           </div>
-          <div className="info">
+
+          <div className="info" style={{ marginTop: "20px" }}>
             <p>
               <img src="/assets/location.svg" alt="Location" /> {cafeDetails.address}
             </p>
@@ -224,6 +235,8 @@ const CafeDetail = () => {
               <img src="/assets/phone.svg" alt="Phone" /> 電話番号: {cafeDetails.phone || "N/A"}
             </p>
           </div>
+
+          {/* Mapbox Map */}
           <div
             ref={mapContainerRef}
             style={{ height: "400px", width: "100%", marginTop: "20px" }}
