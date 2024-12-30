@@ -104,7 +104,7 @@ const CafeDetail = () => {
         id: cafeDetails.id,
         name: cafeDetails.name,
         address: cafeDetails.address,
-        image: cafeDetails.image || "/assets/card-dummy.png",
+        image: cafeDetails.url_image || "/assets/card-dummy.png",
         categories: cafeDetails.categories,
       };
       bookmarks.push(newBookmark);
@@ -122,7 +122,7 @@ const CafeDetail = () => {
   }
 
   // Default to 4 images if not enough images are provided
-  const cafeImages = cafeDetails.images?.length >= 4 ? cafeDetails.images.slice(0, 4) : new Array(4).fill(cafeDetails.image || "/assets/card-dummy.png");
+  const cafeImages = cafeDetails.images?.length >= 4 ? cafeDetails.images.slice(0, 4) : new Array(4).fill(cafeDetails.url_image || "/assets/card-dummy.png");
 
   return (
     <div>
@@ -167,42 +167,41 @@ const CafeDetail = () => {
 
       {/* Detail Content */}
       <div className="detail-container" style={{ display: "flex", gap: "20px", padding: "20px" }}>
-        {/* Left Side - Cafe Photo */}
         <div className="detail-left" style={{ flex: "1", marginBottom: "20px" }}>
+          {/* Hình ảnh chính */}
           <img
-            src={cafeDetails.image || "/assets/card-dummy.png"}
+            src={cafeDetails.url_image || "/assets/card-dummy.png"} // Sử dụng url_image từ database
             alt="Cafe Photo"
             className="cafe-photo"
             style={{
-              width: "100%", 
-              height: "400px", 
-              objectFit: "cover", 
-              marginBottom: "20px"
+              width: "100%",
+              height: "400px",
+              objectFit: "cover",
+              marginBottom: "20px",
             }}
           />
-
-          {/* 4 Images Gallery */}
           <div className="image-gallery" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-            {cafeImages.map((image, index) => (
-              <img
-                key={index}
-                src={image}
-                alt={`Cafe Image ${index + 1}`}
-                style={{
-                  width: "100%", 
-                  height: "auto", 
-                  objectFit: "cover", 
-                  maxHeight: "150px",
-                }}
-              />
-            ))}
+            {cafeDetails.images && cafeDetails.images.length > 0
+              ? cafeDetails.images.map((image, index) => (
+                  <img
+                    key={index}
+                    src={image}
+                    alt={`Cafe Image ${index + 1}`}
+                    style={{
+                      width: "100%",
+                      height: "auto",
+                      objectFit: "cover",
+                      maxHeight: "150px",
+                    }}
+                  />
+                ))
+              : <p>他に表示できる画像がありません。</p>}
           </div>
         </div>
 
         {/* Right Side - Cafe Info */}
         <div className="detail-right" style={{ flex: "1" }}>
           <h1>{cafeDetails.name}</h1>
-
           {/* Cafe Details */}
           <div className="categories" style={{ marginBottom: "20px" }}>
             <h3>Categories:</h3>
@@ -236,12 +235,18 @@ const CafeDetail = () => {
             </p>
           </div>
 
-          {/* Mapbox Map */}
+          {/* Mapbox */}
           <div
+            id="map"
             ref={mapContainerRef}
-            style={{ height: "400px", width: "100%", marginTop: "20px" }}
-            id="map-container"
-          />
+            style={{
+              width: "100%",
+              height: "300px",
+              marginTop: "20px",
+              borderRadius: "10px",
+              overflow: "hidden",
+            }}
+          ></div>
         </div>
       </div>
     </div>
