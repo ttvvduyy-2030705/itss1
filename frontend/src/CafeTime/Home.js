@@ -291,7 +291,7 @@ function Home() {
         {recommendedCafes.length > 0 ? (
             recommendedCafes.map(cafe => (
                 <div className="card" key={cafe.id} onClick={() => handleCardClick(cafe.id)}>
-                    <img src={cafe.image || '/assets/card-dummy.png'} alt={cafe.name} />
+                    <img src={cafe.url_image || '/assets/card-dummy.png'} alt={cafe.name} />
                     <div className="card-content">
                         <h3>{cafe.name}</h3>
                         <p>{cafe.address}</p>
@@ -311,21 +311,17 @@ function Home() {
     </div>
 </div>
 
-                <div className="cards-bg"></div>
-
-                <h2>最近ご覧になった</h2>
-                <div className="cards" id="cards-container">
+<h2>最近ご覧になった</h2>
+<div className="cards" id="cards-container">
     {searchResults.length > 0 ? (
         searchResults.map((cafe) => (
             <div className="card" key={cafe.id} onClick={() => handleCardClick(cafe.id)}>
-                <img src={cafe.image || '/assets/card-dummy.png'} alt="Card Image" />
+                <img src={cafe.url_image || '/assets/card-dummy.png'} alt="Card Image" />
                 <div className="card-content">
                     <div className="card-header">
-                        {/* Remove the star icon */}
                         <span className="distance">{cafe.distance}km</span>
                     </div>
                     <h3>{cafe.name}</h3>
-                    {/* Add "住所" before the address */}
                     <p className="cafe-address">住所: {cafe.address}</p>
                     <div className="tags">
                         {cafe.categories?.map((category) => (
