@@ -100,11 +100,14 @@ function Home() {
         const bookmarkedTags = savedBookmarks.flatMap(cafe => cafe.categories || []);
         console.log('Bookmarked tags:', bookmarkedTags);
 
-        const recommended = allCafes.filter(cafe =>
-            cafe.categories &&
-            cafe.categories.some(category => bookmarkedTags.includes(category)) &&
-            !savedBookmarks.some(bookmarkedCafe => bookmarkedCafe.id === cafe.id)
-        );
+        const recommended = allCafes
+            .filter(cafe =>
+                cafe.categories &&
+                cafe.categories.some(category => bookmarkedTags.includes(category)) &&
+                !savedBookmarks.some(bookmarkedCafe => bookmarkedCafe.id === cafe.id) &&
+                parseFloat(cafe.distance) < 20
+            )
+            .slice(0, 15);
 
         console.log('Recommended cafes:', recommended);
         setRecommendedCafes(recommended);
@@ -138,7 +141,7 @@ function Home() {
         if (searchQuery.trim() !== '') {
             navigate(`/search-results?q=${encodeURIComponent(searchQuery)}`);
         }
-    };    
+    };
 
     const handleSortChange = (order) => {
         setSortOrder(order);
@@ -239,7 +242,33 @@ function Home() {
             </header>
 
             <section className="cards-section">
-                <div>
+
+            <div className="recommend-section">
+    <h2>あなたのブックマークに似たカフェ</h2>
+    <div className="cards">
+        {recommendedCafes.length > 0 ? (
+            recommendedCafes.map(cafe => (
+                <div className="card" key={cafe.id} onClick={() => handleCardClick(cafe.id)}>
+                    <img src={cafe.url_image || '/assets/card-dummy.png'} alt={cafe.name} />
+                    <div className="card-content">
+                        <h3>{cafe.name}</h3>
+                        <p>{cafe.address}</p>
+                        <div className="tags">
+                            {cafe.categories?.map((category) => (
+                                <span className="tag" key={category}>
+                                    {category}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            ))
+        ) : (
+            <p>おすすめのカフェがありません。</p>
+        )}
+    </div>
+</div>
+                <div className='things-1'>
                     <label>経度: </label>
                     <input
                         type="number"
@@ -285,58 +314,37 @@ function Home() {
                         </div>
                     </div>
                 )}
-                <div className="recommend-section">
-    <h2>あなたのブックマークに似たカフェ</h2>
-    <div className="cards">
-        {recommendedCafes.length > 0 ? (
-            recommendedCafes.map(cafe => (
-                <div className="card" key={cafe.id} onClick={() => handleCardClick(cafe.id)}>
-                    <img src={cafe.url_image || '/assets/card-dummy.png'} alt={cafe.name} />
-                    <div className="card-content">
-                        <h3>{cafe.name}</h3>
-                        <p>{cafe.address}</p>
-                        <div className="tags">
-                            {cafe.categories?.map((category) => (
-                                <span className="tag" key={category}>
-                                    {category}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            ))
-        ) : (
-            <p>おすすめのカフェがありません。</p>
-        )}
-    </div>
-</div>
 
-<h2>最近ご覧になった</h2>
-<div className="cards" id="cards-container">
-    {searchResults.length > 0 ? (
-        searchResults.map((cafe) => (
-            <div className="card" key={cafe.id} onClick={() => handleCardClick(cafe.id)}>
-                <img src={cafe.url_image || '/assets/card-dummy.png'} alt="Card Image" />
-                <div className="card-content">
-                    <div className="card-header">
-                        <span className="distance">{cafe.distance}km</span>
-                    </div>
-                    <h3>{cafe.name}</h3>
-                    <p className="cafe-address">住所: {cafe.address}</p>
-                    <div className="tags">
-                        {cafe.categories?.map((category) => (
-                            <span className="tag" key={category}>
-                                {category}
-                            </span>
-                        ))}
-                    </div>
+                <div className="cards-bg"></div>
+
+                <h2>最近ご覧になった</h2>
+                <div className="cards" id="cards-container">
+                    {searchResults.length > 0 ? (
+                        searchResults.map((cafe) => (
+                            <div className="card" key={cafe.id} onClick={() => handleCardClick(cafe.id)}>
+                                <img src={cafe.image || '/assets/card-dummy.png'} alt="Card Image" />
+                                <div className="card-content">
+                                    <div className="card-header">
+                                        {/* Remove the star icon */}
+                                        <span className="distance">{cafe.distance}km</span>
+                                    </div>
+                                    <h3>{cafe.name}</h3>
+                                    {/* Add "住所" before the address */}
+                                    <p className="cafe-address">住所: {cafe.address}</p>
+                                    <div className="tags">
+                                        {cafe.categories?.map((category) => (
+                                            <span className="tag" key={category}>
+                                                {category}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p>一致するカフェが見つかりませんでした。</p>
+                    )}
                 </div>
-            </div>
-        ))
-    ) : (
-        <p>一致するカフェが見つかりませんでした。</p>
-    )}
-</div>
 
             </section>
         </div>
