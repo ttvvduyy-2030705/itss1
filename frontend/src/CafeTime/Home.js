@@ -322,7 +322,7 @@ function Home() {
                     {searchResults.length > 0 ? (
                         searchResults.map((cafe) => (
                             <div className="card" key={cafe.id} onClick={() => handleCardClick(cafe.id)}>
-                                <img src={cafe.image || '/assets/card-dummy.png'} alt="Card Image" />
+                                <img src={cafe.url_image || '/assets/card-dummy.png'} alt="Card Image" />
                                 <div className="card-content">
                                     <div className="card-header">
                                         {/* Remove the star icon */}
